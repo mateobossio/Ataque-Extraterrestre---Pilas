@@ -1,0 +1,224 @@
+import pilas
+import random
+Animacion = pilas.actores.Animacion
+from pilas.actores import Bomba
+from pilas.actores import Ovni
+
+class Ship(Animacion):
+
+        
+    def __init__(self, x=0, y=0, velocidad=2):
+	#self.definir_imagen("nave.jpg")
+        self.velocidad = velocidad
+        #self.image_normal = pilas.imagenes.cargar("694.jpg")
+        grilla = pilas.imagenes.cargar_grilla("nave.png")
+        Animacion.__init__(self, grilla, ciclica=True, x=x, y=y) 
+        self.radio_de_colision = 50
+        self.aprender(pilas.habilidades.PuedeExplotar)
+        self.municion = pilas.actores.proyectil.Bala
+        self.aprender(pilas.habilidades.DispararConClick,
+                       municion=self.municion,
+                       angulo_salida_disparo=0,
+                       frecuencia_de_disparo=4,
+                       offset_disparo=(50,50),
+                       escala=1.1)
+
+        self.puntaje_total=0
+                        
+
+    def actualizar(self):
+        Animacion.actualizar(self)
+
+
+    def definir_enemigos(self, grupo, cuando_elimina_enemigo=None):
+        self.cuando_elimina_enemigo = cuando_elimina_enemigo
+        self.habilidades.DispararConClick.definir_colision(grupo, self.hacer_explotar_al_enemigo)
+        
+
+    def hacer_explotar_al_enemigo(self, mi_disparo, el_enemigo):
+        puntaje.escala = 1
+        puntaje.escala = pilas.interpolar(1,duracion=0.5,tipo="rebote_final")
+        puntaje.aumentar(5)
+        self.puntaje_total = puntaje.obtener()
+        
+
+
+        mi_disparo.eliminar()
+        if isinstance(el_enemigo,Bomba):
+            el_enemigo.eliminar()
+
+        if self.cuando_elimina_enemigo:
+            self.cuando_elimina_enemigo()
+
+class Bombas(Bomba):
+    
+    def __init__(self, x=0, y=500):
+        Bomba.__init__(self, x, y=500)
+        self.actualizando = False
+        self.y=random.randrange(500,1400)
+        self.velocidad=-2        
+
+    def actualizar(self):
+        if self.actualizando:
+            self.y += self.velocidad
+            if self.y < -240:
+                self.y = 240
+                self.x = random.randrange(-320, 320)
+
+class Ovnis(Ovni):
+
+    def __init__(self, x= 0, y=200):
+        Ovni.__init__(self, x, y)
+        self.acu = 200
+        self.actualizando = False;
+        self.velocidad = -9
+	grilla = pilas.imagenes.cargar_grilla("ovni.png")
+	self.radio_de_colision = 50
+
+    def quitarVidas():
+        self.vidas = self.vidas - 1
+
+    def actualizar(self):
+        if self.actualizando:
+            self.x += self.velocidad
+            if self.x < -220:
+                self.y = self.acu
+                self.x = 320
+                self.acu = self.acu - 75
+                if self.y < -220:
+                    self.acu = 200
+                    self.y = self.acu
+                    self.x = 320
+                    self.acu = self.acu - 75
+
+        else:
+            self.x=1000
+            self.y=1000
+
+class Perder():
+    def __init__(self, vida = 5):      
+        self.vidas = 5
+
+    def perdervidas(self):
+        self.vidas = self.vidas - 1
+
+    def regenerar_vidas(self):
+        self.vidas = 5        
+
+    def getVidas(self):
+        return self.vidas
+
+def explotar_bomba(protagonista,bomba):
+    vidas.escala = 1
+    vidas.escala = pilas.interpolar(1,duracion=0.5,tipo="rebote_final")
+    vidas.aumentar(-1)
+    puntaje.aumentar(5)
+    bomba.explotar()
+    perder.perdervidas()
+    pilas.avisar("IMPACTO DIRECTO")
+    if perder.getVidas() <= 0:
+            pilas.avisar ("HA PERDIDO EL JUEGO!, gracias por jugar")
+            bombas.explotar()
+            bombas_2.explotar() 
+            bombas_3.explotar()                 
+            protagonista.eliminar()
+
+def explotar_ovni(protagonista,ovnis):
+    vidas.escala = 1
+    vidas.escala = pilas.interpolar(1,duracion=0.5,tipo="rebote_final")
+    vidas.aumentar(-1)
+    puntaje.aumentar(5)
+    perder.perdervidas()
+    if perder.getVidas() <= 0:
+            pilas.avisar ("HA PERDIDO EL JUEGO!, gracias por jugar")
+            protagonista.eliminar()
+
+def niveles(self):
+    print protagonista.puntaje_total
+    puntaje_total = protagonista.puntaje_total
+    if puntaje_total == 125:
+        pilas.avisar("CUIDADO CON LA FLOTA ENEMIGA!")
+        ovni.actualizando=True
+    if puntaje_total == 375:
+        pilas.avisar("AQUI VIENEN SUS NAVES!")
+        ovni_2.actualizando=True
+    if puntaje_total == 675:
+        pilas.avisar("ULTIMA NAVE EN PIE!")
+        ovni_3.actualizando=True
+    if puntaje_total == 200:
+        pilas.avisar("DIRIGUIENDOSE AL NIVEL 2")
+        for bomba_2 in bombas_2:
+            bomba_2.actualizando=True
+        protagonista.definir_enemigos(bomba_2)
+        ovni.actualizando=False
+    if puntaje_total == 450:
+        pilas.avisar("DIRIGUIENDOSE AL NIVEL 3")
+        for bomba_3 in bombas_3:
+            bomba_3.actualizando=True
+        protagonista.definir_enemigos(bomba_3)
+        ovni_2.actualizando=False
+    if puntaje_total == 900:
+        ovni_3.actualizando=False         
+        pilas.avisar ("HAS GANADO EL JUEGO")        
+
+pilas.iniciar()
+pilas.actores.Sonido()
+vidas = pilas.actores.Puntaje(x=280 ,y=185 ,color=pilas.colores.amarillo)
+vidas.magnitud = 40
+puntaje = pilas.actores.Puntaje(x=-280 ,y=-185 ,color=pilas.colores.verde)
+puntaje.magnitud = 40
+vidas.aumentar(5)
+perder = Perder()
+protagonista = Ship()
+protagonista.escala = 0.5
+protagonista.aprender(pilas.habilidades.SeguirAlMouse)
+protagonista.aprender(pilas.habilidades.Disparar )
+
+
+bomba = Bombas()
+bombas = bomba * 25
+protagonista.definir_enemigos(bombas)
+for bomba in bombas:
+    bomba.actualizando=True
+
+bomba_2 = Bombas()
+bombas_2 = bomba_2 *35
+bombas_2.velocidad = -4
+protagonista.definir_enemigos(bombas_2)
+
+
+bomba_3 = Bombas()
+bombas_3 = bomba_3 *45
+bombas_3.velocidad = -6
+protagonista.definir_enemigos(bombas_3)
+
+
+ovni = Ovnis()
+ovni.escala = 1
+protagonista.definir_enemigos(ovni)
+
+ovni_2 = Ovnis()
+ovni_2.velocidad = -11
+ovni_2.escala = 1.7
+protagonista.definir_enemigos(ovni_2)
+
+ovni_3 = Ovnis()
+ovni_3.velocidad = -13
+ovni_3.escala = 2.4
+protagonista.definir_enemigos(ovni_3)
+
+ovnis = [ovni, ovni_2, ovni_3]
+
+pilas.mundo.motor.ocultar_puntero_del_mouse()
+espacio = pilas.fondos.Fondo('espacio.jpg')
+puntaje_total = protagonista.puntaje_total
+print "este es el real",puntaje_total
+pilas.mundo.colisiones.agregar(protagonista,ovnis,explotar_ovni)
+pilas.mundo.colisiones.agregar(protagonista,bombas,explotar_bomba)
+pilas.mundo.colisiones.agregar(protagonista,bombas_2,explotar_bomba)
+pilas.mundo.colisiones.agregar(protagonista,bombas_3,explotar_bomba)
+pilas.eventos.actualizar.conectar(niveles)
+musica = pilas.musica.cargar("spaceman.mp3")
+musica.reproducir()
+pilas.avisar("Preparado? Cuidate de las bombas!")
+pilas.ejecutar()
